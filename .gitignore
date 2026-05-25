@@ -1,8 +1,7 @@
 # Dependencies
 node_modules/
 
-# Build output
-dist/
+# Build output — dist/ committed intentionally for EC2 deployment
 dist-ssr/
 
 # Environment variables — never commit real .env
