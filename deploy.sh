@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
-# Run this script on the EC2 instance to pull and deploy the latest build.
+# deploy.sh — run on EC2 to pull and deploy the latest build.
 # Usage: bash ~/lexie-frontend/deploy.sh
 set -e
 
 REPO_DIR="$HOME/lexie-frontend"
 NGINX_ROOT="/var/www/html"
 
-echo "==> Pulling latest code..."
-git -C "$REPO_DIR" pull origin main
+echo "==> Fetching latest from origin..."
+git -C "$REPO_DIR" fetch origin main
+
+echo "==> Resetting to origin/main (discards any local changes)..."
+git -C "$REPO_DIR" reset --hard origin/main
 
 # Install Node.js 20 via NodeSource if not already present.
 if ! command -v node &>/dev/null; then
