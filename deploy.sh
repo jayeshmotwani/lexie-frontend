@@ -16,15 +16,17 @@ if ! command -v node &>/dev/null; then
     sudo apt-get install -y nodejs
 fi
 
+cd "$REPO_DIR"
+
 echo "==> Installing npm dependencies..."
-npm --prefix "$REPO_DIR" ci
+npm ci
 
 echo "==> Building frontend..."
-npm --prefix "$REPO_DIR" run build
+npm run build
 
 echo "==> Deploying to $NGINX_ROOT..."
 sudo mkdir -p "$NGINX_ROOT"
-sudo cp -r "$REPO_DIR/dist/." "$NGINX_ROOT/"
+sudo cp -r dist/. "$NGINX_ROOT/"
 
 echo "==> Reloading nginx..."
 sudo nginx -t && sudo systemctl reload nginx
