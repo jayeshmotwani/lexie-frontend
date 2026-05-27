@@ -63,7 +63,7 @@ export default function ChatPage() {
 
     try {
       const data = await sendMessage(sessionId, text)
-      setMessages((prev) => [...prev, { role: 'assistant', text: data.reply }])
+      setMessages((prev) => [...prev, { role: 'assistant', text: data.response }])
     } catch (err) {
       setMessages((prev) => [
         ...prev,
