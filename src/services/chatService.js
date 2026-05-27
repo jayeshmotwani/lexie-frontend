@@ -3,7 +3,7 @@
  *
  * FastAPI endpoints:
  *   POST /start-session  { session_id, target_language, user_name? }  → { session_id, message }
- *   POST /chat           { session_id, message } → { reply }
+ *   POST /chat           { session_id, message } → { session_id, language, response }
  */
 import api from './api'
 
