@@ -27,7 +27,7 @@ export default function ChatPage() {
     async function init() {
       setLoading(true)
       try {
-        const data = await startSession(language)
+        const data = await startSession(language, user?.name || user?.email)
         setSessionId(data.session_id)
         // Show the bot's opening greeting
         setMessages([{ role: 'assistant', text: data.message }])
