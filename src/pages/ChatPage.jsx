@@ -24,14 +24,17 @@ export default function ChatPage() {
 
   // Start session when the component mounts
   useEffect(() => {
+    const controller = new AbortController()
+
     async function init() {
       setLoading(true)
       try {
-        const data = await startSession(language, user?.name || user?.email)
+        const data = await startSession(language, user?.name || user?.email, controller.signal)
         setSessionId(data.session_id)
         // Show the bot's opening greeting
         setMessages([{ role: 'assistant', text: data.message }])
       } catch (err) {
+        if (err.name === 'CanceledError' || err.code === 'ERR_CANCELED') return
         setInitError('Could not connect to Lexie. Is the backend running?')
         console.error('startSession error:', err)
       } finally {
@@ -39,6 +42,8 @@ export default function ChatPage() {
       }
     }
     init()
+
+    return () => controller.abort()
   }, [language])
 
   // Scroll to bottom whenever messages update
