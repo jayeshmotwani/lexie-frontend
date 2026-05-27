@@ -7,6 +7,16 @@
  */
 import api from './api'
 
+function generateUUID() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
+  })
+}
+
 /**
  * Starts a new learning session for the given language.
  * @param {string} language   e.g. "Spanish"
@@ -15,7 +25,7 @@ import api from './api'
  */
 export async function startSession(language, userName, signal) {
   const body = {
-    session_id: crypto.randomUUID(),
+    session_id: generateUUID(),
     target_language: language,
     ...(userName ? { user_name: userName } : {}),
   }
