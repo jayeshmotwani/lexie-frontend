@@ -17,7 +17,7 @@ if ! command -v node &>/dev/null; then
 fi
 
 echo "==> Installing npm dependencies..."
-npm --prefix "$REPO_DIR" ci --omit=dev
+npm --prefix "$REPO_DIR" ci
 
 echo "==> Building frontend..."
 npm --prefix "$REPO_DIR" run build
