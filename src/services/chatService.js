@@ -13,13 +13,13 @@ import api from './api'
  * @param {string} [userName] optional display name
  * @returns {Promise<{ session_id: string, message: string }>}
  */
-export async function startSession(language, userName) {
+export async function startSession(language, userName, signal) {
   const body = {
     session_id: crypto.randomUUID(),
     target_language: language,
     ...(userName ? { user_name: userName } : {}),
   }
-  const { data } = await api.post('/start-session', body)
+  const { data } = await api.post('/start-session', body, { signal })
   return data
 }
 
