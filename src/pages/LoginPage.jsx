@@ -100,12 +100,6 @@ export default function LoginPage() {
         <p className="text-center text-xs text-gray-400 mt-6">
           Hint: username&nbsp;<strong>admin</strong> / password&nbsp;<strong>admin</strong>
         </p>
-
-        <div className="text-center mt-4">
-          <span className="inline-block bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full border border-green-200">
-            Auto-deployed via GitHub Actions
-          </span>
-        </div>
       </div>
     </div>
   )
