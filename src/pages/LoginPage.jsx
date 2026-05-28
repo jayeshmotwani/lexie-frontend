@@ -1,13 +1,12 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { login as authLogin } from '../services/authService'
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const { login } = useAuth()
 
-  const [username, setUsername] = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [error, setError]       = useState('')
   const [loading, setLoading]   = useState(false)
@@ -18,11 +17,14 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const user = await authLogin(username, password)
-      login(user)           // store in context
-      navigate('/home')     // go to home page
+      await login(email, password)
+      navigate('/home')
     } catch (err) {
-      setError(err.message)
+      if (err.response?.status === 401) {
+        setError('Incorrect email or password')
+      } else {
+        setError(err.message || 'Something went wrong. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -47,16 +49,16 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
 
-            {/* Username */}
+            {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Username
+                Email
               </label>
               <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter username"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter email"
                 required
                 autoFocus
                 className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
@@ -97,8 +99,11 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-6">
-          Hint: username&nbsp;<strong>admin</strong> / password&nbsp;<strong>admin</strong>
+        <p className="text-center text-sm text-gray-500 mt-6">
+          Don't have an account?{' '}
+          <Link to="/register" className="text-indigo-600 hover:underline font-medium">
+            Register
+          </Link>
         </p>
       </div>
     </div>
