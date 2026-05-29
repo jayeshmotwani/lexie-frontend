@@ -1,9 +1,15 @@
 /**
- * ChatService — all FastAPI chat calls live here.
+ * ChatService — all FastAPI chat and session calls live here.
  *
- * FastAPI endpoints:
+ * Bot endpoints:
  *   POST /start-session  { session_id, target_language, user_name? }  → { session_id, message }
  *   POST /chat           { session_id, message } → { session_id, language, response }
+ *
+ * Session persistence endpoints:
+ *   POST   /sessions           { language } → ChatSession
+ *   GET    /sessions                        → ChatSession[]
+ *   GET    /sessions/{id}                   → ChatSession & { messages: ChatMessage[] }
+ *   DELETE /sessions/{id}                   → 204
  */
 import api from './api'
 
@@ -18,14 +24,12 @@ function generateUUID() {
 }
 
 /**
- * Starts a new learning session for the given language.
- * @param {string} language   e.g. "Spanish"
- * @param {string} [userName] optional display name
- * @returns {Promise<{ session_id: string, message: string }>}
+ * Initialises (or re-initialises) a bot session.
+ * Pass an existing sessionId when resuming after a page reload or server restart.
  */
-export async function startSession(language, userName, signal) {
+export async function startSession(language, userName, signal, sessionId) {
   const body = {
-    session_id: generateUUID(),
+    session_id: sessionId || generateUUID(),
     target_language: language,
     ...(userName ? { user_name: userName } : {}),
   }
@@ -35,11 +39,33 @@ export async function startSession(language, userName, signal) {
 
 /**
  * Sends a user message and returns the bot's reply.
- * @param {string} sessionId
- * @param {string} message
- * @returns {Promise<{ reply: string }>}
  */
 export async function sendMessage(sessionId, message) {
   const { data } = await api.post('/chat', { session_id: sessionId, message })
   return data
+}
+
+// ── Persistent session endpoints ─────────────────────────────────────────────
+
+/** Creates a new session DB record and returns the ChatSession object. */
+export async function createSession(language) {
+  const { data } = await api.post('/sessions', { language })
+  return data
+}
+
+/** Returns up to 50 sessions for the current user, newest first. */
+export async function fetchSessions() {
+  const { data } = await api.get('/sessions')
+  return data
+}
+
+/** Returns session metadata plus full message history. */
+export async function fetchSessionDetail(sessionId) {
+  const { data } = await api.get(`/sessions/${sessionId}`)
+  return data
+}
+
+/** Hard-deletes a session and all its messages. */
+export async function deleteSession(sessionId) {
+  await api.delete(`/sessions/${sessionId}`)
 }
