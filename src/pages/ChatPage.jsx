@@ -14,7 +14,8 @@ import {
 } from '../services/chatService'
 
 export default function ChatPage() {
-  const { user, logout } = useAuth()
+  const { user, logout, refreshUser } = useAuth()
+  const isRateLimited = (user?.messages_remaining ?? 1) <= 0
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -113,13 +114,27 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, { role: 'assistant', text: data.response }])
       // Refresh sidebar to pick up title (set on first message) and updated_at
       fetchSessions().then(setSessions).catch(console.error)
-    } catch {
+      refreshUser()
+    } catch (err) {
+      if (err.response?.status === 429) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            text: `⚠ You've reached your daily message limit. Your limit resets at midnight UTC.`,
+          },
+        ])
+        refreshUser()
+        setLoading(false)
+        return
+      }
       // Server may have lost the in-memory session (e.g. restart) — reinit silently and retry
       try {
         await startSession(language, undefined, undefined, sessionId)
         const data = await sendMessage(sessionId, text)
         setMessages((prev) => [...prev, { role: 'assistant', text: data.response }])
         fetchSessions().then(setSessions).catch(console.error)
+        refreshUser()
       } catch (retryErr) {
         setMessages((prev) => [
           ...prev,
@@ -196,6 +211,11 @@ export default function ChatPage() {
               <div>
                 <p className="text-sm font-semibold text-gray-900">Lexie</p>
                 <p className="text-xs text-gray-400">{language} tutor</p>
+                {user?.daily_message_limit && (
+                  <p className="text-xs text-gray-400">
+                    {user.messages_remaining ?? user.daily_message_limit} / {user.daily_message_limit} msgs left today
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -227,6 +247,12 @@ export default function ChatPage() {
           <div ref={bottomRef} />
         </main>
 
+        {isRateLimited && (
+          <div className="bg-amber-50 border-t border-amber-200 px-4 py-2 text-center text-xs text-amber-700">
+            Daily message limit reached — resets at midnight UTC.
+          </div>
+        )}
+
         {/* Input bar */}
         <footer className="bg-white border-t border-gray-100 px-4 py-3 sticky bottom-0">
           <form
@@ -238,12 +264,12 @@ export default function ChatPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={sessionId ? `Message Lexie…` : 'Connecting…'}
-              disabled={!sessionId || loading}
+              disabled={!sessionId || loading || isRateLimited}
               className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-400 transition"
             />
             <button
               type="submit"
-              disabled={!input.trim() || loading || !sessionId}
+              disabled={!input.trim() || loading || !sessionId || isRateLimited}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white w-10 h-10 rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
               title="Send"
             >

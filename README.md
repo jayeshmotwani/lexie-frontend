@@ -92,9 +92,9 @@ src/
 │   ├── ProtectedRoute.jsx  # Auth guard — redirects to / if not logged in
 │   └── Sidebar.jsx         # Session list (ChatGPT-style) with relative timestamps
 ├── context/
-│   └── AuthContext.jsx     # User state, login/logout/register, localStorage token storage
+│   └── AuthContext.jsx     # User state, login/logout/register/refreshUser, localStorage token storage
 ├── pages/
-│   ├── ChatPage.jsx        # Main chat UI; manages sessions, messages, language
+│   ├── ChatPage.jsx        # Main chat UI; manages sessions, messages, language, rate-limit state
 │   ├── HomePage.jsx        # Language picker (Spanish, French, German, and more)
 │   ├── LoginPage.jsx       # Email + password login form
 │   └── RegisterPage.jsx    # New user registration form
@@ -109,6 +109,17 @@ src/
 ## Authentication
 
 The app uses JWT-based authentication. Tokens are stored in `localStorage`. The Axios instance in `services/api.js` automatically attaches the `access_token` to every request as a Bearer header. On a 401 response, it attempts a silent token refresh; if the refresh fails, it clears storage and redirects to the login page.
+
+## Rate Limiting
+
+The backend enforces a daily message quota per user. The frontend handles this gracefully:
+
+- A usage pill in the chat header shows **X / Y msgs left today**, updated after every message sent.
+- When the limit is reached, an amber banner appears above the input bar and the input + send button are disabled.
+- A 429 response from `POST /chat` surfaces an in-chat error bubble rather than a generic failure message.
+- `AuthContext` exposes a `refreshUser()` helper that re-fetches `/auth/me` to keep the counter in sync without a full page reload.
+
+The UI degrades safely if `messages_remaining` is absent from the user object (e.g. an older backend) — the input is never incorrectly disabled.
 
 ## Deployment
 
