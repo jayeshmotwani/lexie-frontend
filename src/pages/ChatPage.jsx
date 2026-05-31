@@ -27,6 +27,13 @@ export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen]     = useState(false)
   const [sessions, setSessions]           = useState([])
   const [sessionsLoading, setSessionsLoading] = useState(true)
+  const [showLanguagePicker, setShowLanguagePicker] = useState(false)
+  const [pendingLanguage, setPendingLanguage]       = useState('Spanish')
+
+  const LANGUAGES = [
+    'Spanish', 'French', 'German', 'Italian', 'Portuguese',
+    'Japanese', 'Mandarin', 'Korean', 'Hindi', 'Arabic',
+  ]
 
   const bottomRef = useRef(null)
 
@@ -136,7 +143,7 @@ export default function ChatPage() {
 
   function handleNewChat() {
     setSidebarOpen(false)
-    navigate('/home')
+    setShowLanguagePicker(true)
   }
 
   async function handleDeleteSession(id) {
@@ -144,7 +151,7 @@ export default function ChatPage() {
       await deleteSession(id)
       setSessions((prev) => prev.filter((s) => s.id !== id))
       // If we just deleted the active session, go home
-      if (id === sessionId) navigate('/home')
+      if (id === sessionId) setShowLanguagePicker(true)
     } catch (err) {
       console.error('deleteSession error:', err)
     }
@@ -181,13 +188,6 @@ export default function ChatPage() {
               title="Toggle sidebar"
             >
               ☰
-            </button>
-            <button
-              onClick={() => navigate('/home')}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-              title="Back to Home"
-            >
-              ←
             </button>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-sm">
@@ -254,6 +254,45 @@ export default function ChatPage() {
           </form>
         </footer>
       </div>
+
+      {showLanguagePicker && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 px-4">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowLanguagePicker(false)}
+          />
+          <div className="relative bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">Start a new chat</h3>
+            <p className="text-xs text-gray-400 mb-4">Choose the language you want to practise</p>
+            <select
+              value={pendingLanguage}
+              onChange={(e) => setPendingLanguage(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white mb-4"
+            >
+              {LANGUAGES.map((lang) => (
+                <option key={lang} value={lang}>{lang}</option>
+              ))}
+            </select>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowLanguagePicker(false)}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowLanguagePicker(false)
+                  navigate('/chat', { state: { language: pendingLanguage } })
+                }}
+                className="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors"
+              >
+                Start Chat →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
