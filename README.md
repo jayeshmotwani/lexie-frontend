@@ -77,7 +77,7 @@ In production, `VITE_API_BASE_URL` is set to `/api` (relative path) so requests 
 |---|---|---|
 | `/` | Public | Login page |
 | `/register` | Public | User registration |
-| `/home` | Protected | Language selection — pick a target language to begin |
+| `/home` | Protected | Language selection — pick a target language to start a new session. Includes a sidebar for accessing past sessions. |
 | `/chat` | Protected | Chat interface with session sidebar |
 
 Unauthenticated users hitting a protected route are redirected to `/`.

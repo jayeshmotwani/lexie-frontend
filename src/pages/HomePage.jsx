@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Sidebar from '../components/Sidebar'
+import { fetchSessions, deleteSession } from '../services/chatService'
 
 const LANGUAGES = [
   'Spanish', 'French', 'German', 'Italian', 'Portuguese',
@@ -11,28 +13,77 @@ export default function HomePage() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [language, setLanguage] = useState('Spanish')
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sessions, setSessions] = useState([])
+  const [sessionsLoading, setSessionsLoading] = useState(true)
+
+  useEffect(() => {
+    fetchSessions()
+      .then(setSessions)
+      .catch(console.error)
+      .finally(() => setSessionsLoading(false))
+  }, [])
 
   function handleStart() {
-    // Pass the chosen language via router state so ChatPage can read it
     navigate('/chat', { state: { language } })
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex flex-col">
+  function handleSelectSession(session) {
+    setSidebarOpen(false)
+    navigate('/chat', { state: { sessionId: session.id, language: session.language } })
+  }
 
-      {/* Top nav */}
-      <nav className="flex items-center justify-between px-6 py-4 max-w-3xl mx-auto w-full">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">🦜</span>
-          <span className="font-bold text-gray-900">Lexie</span>
-        </div>
-        <button
-          onClick={logout}
-          className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-        >
-          Sign out
-        </button>
-      </nav>
+  async function handleDeleteSession(id) {
+    try {
+      await deleteSession(id)
+      setSessions((prev) => prev.filter((s) => s.id !== id))
+    } catch (err) {
+      console.error('deleteSession error:', err)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex">
+
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        sessions={sessions}
+        sessionsLoading={sessionsLoading}
+        activeSessionId={null}
+        onNewChat={() => setSidebarOpen(false)}
+        onSelectSession={handleSelectSession}
+        onDeleteSession={handleDeleteSession}
+      />
+
+      {/* Content area — shifts right on desktop when sidebar is open */}
+      <div
+        className={`flex flex-col flex-1 min-h-screen transition-all duration-300 ${
+          sidebarOpen ? 'md:ml-[260px]' : ''
+        }`}
+      >
+        {/* Header */}
+        <header className="bg-white/70 backdrop-blur-sm border-b border-gray-100 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen((o) => !o)}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
+              title="Toggle sidebar"
+            >
+              ☰
+            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🦜</span>
+              <span className="font-bold text-gray-900">Lexie</span>
+            </div>
+          </div>
+          <button
+            onClick={logout}
+            className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            Sign out
+          </button>
+        </header>
 
       {/* Main content */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 text-center">
@@ -40,7 +91,7 @@ export default function HomePage() {
 
           {/* Greeting */}
           <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 text-sm font-medium px-4 py-1.5 rounded-full mb-6">
-            👋 Welcome back, {user?.username}
+            👋 Welcome back, {user?.name || user?.username || user?.email?.split('@')[0] || 'there'}
           </div>
 
           <h1 className="text-4xl font-bold text-gray-900 leading-tight mb-4">
@@ -79,10 +130,11 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="text-center text-xs text-gray-400 pb-6">
-        Powered by Lexie AI
-      </footer>
+        {/* Footer */}
+        <footer className="text-center text-xs text-gray-400 pb-6">
+          Powered by Lexie AI
+        </footer>
+      </div>
     </div>
   )
 }
